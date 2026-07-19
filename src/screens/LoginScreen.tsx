@@ -4,7 +4,7 @@ import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
 import {BackLink} from '../components/ScreenHeader';
 import {TextField} from '../components/Field';
-import {PrimaryButton, SecondaryButton} from '../components/Buttons';
+import {PrimaryButton} from '../components/Buttons';
 import {RootScreenProps} from '../navigation/types';
 
 export default function LoginScreen({navigation}: RootScreenProps<'Login'>) {
@@ -45,8 +45,6 @@ export default function LoginScreen({navigation}: RootScreenProps<'Login'>) {
               Нет аккаунта? <Text style={{color: brand.teal500, fontWeight: '700'}}>Зарегистрироваться</Text>
             </Text>
           </TouchableOpacity>
-
-          <SecondaryButton label="Войти через ЭЦП" onPress={() => navigation.replace('Main')} style={styles.ecpBtn} />
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -72,5 +70,4 @@ const styles = StyleSheet.create({
   loginBtn: {marginTop: 8},
   registerRow: {alignItems: 'center', marginTop: 4},
   registerText: {fontSize: 15},
-  ecpBtn: {marginTop: 12},
 });

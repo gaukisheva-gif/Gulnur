@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
@@ -8,6 +8,7 @@ import {FieldLabel, SelectField, TextField} from '../components/Field';
 import {PrimaryButton} from '../components/Buttons';
 import {CalculatorIcon, PlusIcon, TrashIcon} from '../components/Icon';
 import {TnvedPickerModal} from '../components/TnvedPickerModal';
+import {useToast} from '../components/Toast';
 import {RootScreenProps} from '../navigation/types';
 
 type GoodsRow = {
@@ -36,17 +37,51 @@ function formatKzt(value: number): string {
   return Math.round(value).toLocaleString('ru-RU') + ' ₸';
 }
 
-export default function CalculatorScreen({navigation}: RootScreenProps<'Calculator'>) {
+const declTypes = ['Транзитная декларация', 'Декларация на товары', 'Пассажирская декларация'];
+const moveSpecs = ['ФЛ', 'ЮЛ', 'МП', 'СП'];
+
+type CalcResult = {
+  duty: number;
+  excise: number;
+  antidump: number;
+  ndsBasis: number;
+  nds: number;
+  total: number;
+  base: number;
+  goodsCount: number;
+  perGood: {row: GoodsRow; share: number}[];
+};
+
+export default function CalculatorScreen({navigation, route}: RootScreenProps<'Calculator'>) {
   const {colors} = useTheme();
+  const {showToast} = useToast();
+  const prefill = route.params;
+  const [declType, setDeclType] = useState(declTypes[0]);
   const [personType, setPersonType] = useState('');
   const [moveType, setMoveType] = useState('');
+  const [moveSpec, setMoveSpec] = useState('');
   const [fromCountry, setFromCountry] = useState('');
   const [toCountry, setToCountry] = useState('Казахстан (KZ)');
   const [transport, setTransport] = useState('auto');
   const [transportCost, setTransportCost] = useState('0');
-  const [rows, setRows] = useState<GoodsRow[]>([{id: 1, tnvedCode: '', tnvedName: '', cost: '0', customsValue: '0'}]);
+  const [rows, setRows] = useState<GoodsRow[]>([
+    {id: 1, tnvedCode: prefill?.prefillTnvedCode ?? '', tnvedName: '', cost: '0', customsValue: '0'},
+  ]);
   const [pickerRowId, setPickerRowId] = useState<number | null>(null);
-  const [result, setResult] = useState<{vat: number; fee: number; total: number} | null>(null);
+  const [result, setResult] = useState<CalcResult | null>(null);
+  const [schemeOpen, setSchemeOpen] = useState(true);
+  const [openDetailId, setOpenDetailId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (prefill?.prefillTnvedCode) {
+      const label = prefill.prefillKind === 'tpin' ? 'ТПиН' : 'размера обеспечения';
+      showToast(
+        'Код перенесён в калькулятор',
+        `${prefill.prefillTnvedCode} · расчёт ${label} · укажите стоимость и транспорт, затем «Рассчитать»`,
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const addRow = () => {
     setRows(prev => [
@@ -65,10 +100,24 @@ export default function CalculatorScreen({navigation}: RootScreenProps<'Calculat
 
   const runCalc = () => {
     const goodsTotal = rows.reduce((sum, r) => sum + parseNumber(r.customsValue), 0);
-    const total = goodsTotal + parseNumber(transportCost);
-    const vat = total * 0.12;
-    const fee = 25000;
-    setResult({vat, fee, total: vat + fee});
+    const base = goodsTotal + parseNumber(transportCost);
+    const duty = Math.round(base * 0.05);
+    const excise = 0;
+    const antidump = 0;
+    const ndsBasis = base + duty;
+    const nds = Math.round(ndsBasis * 0.22);
+    const total = duty + excise + antidump + nds;
+
+    const rowValues = rows.map(r => parseNumber(r.customsValue));
+    const rowTotal = rowValues.reduce((a, b) => a + b, 0);
+    const perGood = rows.map((row, i) => ({
+      row,
+      share: rowTotal > 0 ? rowValues[i] / rowTotal : 1 / rows.length,
+    }));
+
+    setResult({duty, excise, antidump, ndsBasis, nds, total, base, goodsCount: rows.length, perGood});
+    setOpenDetailId(null);
+    showToast('Расчёт выполнен', `Итоговая сумма обеспечения: ${formatKzt(total)}`);
   };
 
   const resetCalc = () => setResult(null);
@@ -85,8 +134,16 @@ export default function CalculatorScreen({navigation}: RootScreenProps<'Calculat
       <ScrollView contentContainerStyle={styles.body}>
         <Card style={{gap: 12}}>
           <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>Общая информация</Text>
+          <SelectField label="Тип декларации" required value={declType} options={declTypes} onChange={setDeclType} />
           <SelectField label="Тип лица" required value={personType} options={['Физическое лицо', 'Юридическое лицо', 'Индивидуальный предприниматель']} onChange={setPersonType} />
-          <SelectField label="Вид перемещения" required value={moveType} options={['ИМ', 'ЭК', 'ВТ', 'ТР', 'ТС']} onChange={setMoveType} />
+          <View style={styles.row2}>
+            <View style={{flex: 1}}>
+              <SelectField label="Вид перемещения" required value={moveType} options={['ИМ', 'ЭК', 'ВТ', 'ТР', 'ТС']} onChange={setMoveType} />
+            </View>
+            <View style={{flex: 1}}>
+              <SelectField label="Особенность перемещения" required value={moveSpec} options={moveSpecs} onChange={setMoveSpec} />
+            </View>
+          </View>
           <View style={styles.row2}>
             <View style={{flex: 1}}>
               <SelectField label="Страна отправления" required value={fromCountry} options={countries} onChange={setFromCountry} />
@@ -171,27 +228,110 @@ export default function CalculatorScreen({navigation}: RootScreenProps<'Calculat
         </Card>
 
         {result ? (
-          <Card style={{gap: 10, borderColor: colors.brand100}}>
-            <Text style={[styles.sectionTitle, {color: brand.teal600}]}>Таможенные платежи</Text>
-            <View style={styles.resultRow}>
-              <Text style={{color: colors.textSecondary, fontSize: 13}}>НДС (12%)</Text>
-              <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '700'}}>{formatKzt(result.vat)}</Text>
-            </View>
-            <View style={styles.resultRow}>
-              <Text style={{color: colors.textSecondary, fontSize: 13}}>Таможенный сбор</Text>
-              <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '700'}}>{formatKzt(result.fee)}</Text>
-            </View>
-            <View style={[styles.resultRow, {borderTopWidth: 1, borderTopColor: colors.borderColor, paddingTop: 10}]}>
-              <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '600'}}>Итоговая сумма обеспечения</Text>
-              <Text style={{color: brand.teal600, fontSize: 17, fontWeight: '800'}}>{formatKzt(result.total)}</Text>
-            </View>
-            <Text style={{color: colors.textMuted, fontSize: 11, lineHeight: 16}}>
-              Расчёт выполнен по курсу Нацбанка РК. Точные суммы уточняйте у таможенного брокера.
-            </Text>
-            <TouchableOpacity onPress={resetCalc} style={{alignSelf: 'center', marginTop: 4}}>
+          <>
+            <Card style={{gap: 0}}>
+              <TouchableOpacity style={styles.schemeHeader} onPress={() => setSchemeOpen(v => !v)}>
+                <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>Схема расчёта</Text>
+                <Text style={{color: colors.textMuted, fontSize: 16}}>{schemeOpen ? '⌃' : '⌄'}</Text>
+              </TouchableOpacity>
+              {schemeOpen ? (
+                <View style={{marginTop: 8}}>
+                  {[
+                    ['Тип декларации', declType],
+                    ['Вид перемещения', moveType || 'ИМ'],
+                    ['Особенность перемещения', moveSpec || 'ФЛ'],
+                    ['Страна отправления', fromCountry || '—'],
+                    ['Страна назначения', toCountry || '—'],
+                    ['Количество товаров', String(result.goodsCount)],
+                  ].map(([label, value]) => (
+                    <View key={label} style={[styles.schemeRow, {borderBottomColor: colors.borderColor}]}>
+                      <Text style={{color: colors.textSecondary, fontSize: 12}}>{label}</Text>
+                      <Text style={{color: colors.textPrimary, fontSize: 12, fontWeight: '600'}}>{value}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </Card>
+
+            <Card style={{gap: 10, borderColor: colors.brand100}}>
+              <Text style={[styles.sectionTitle, {color: brand.teal600}]}>Таможенные платежи</Text>
+              <View style={styles.resultRow}>
+                <Text style={{color: colors.textSecondary, fontSize: 13}}>Ввозная таможенная пошлина</Text>
+                <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '700'}}>{formatKzt(result.duty)}</Text>
+              </View>
+              <View style={styles.resultRow}>
+                <Text style={{color: colors.textSecondary, fontSize: 13}}>Акциз и антидемпинговая пошлина</Text>
+                <Text style={{color: colors.textMuted, fontSize: 13, fontWeight: '700'}}>
+                  {formatKzt(result.excise + result.antidump)}
+                </Text>
+              </View>
+              <View style={styles.resultRow}>
+                <Text style={{color: colors.textSecondary, fontSize: 13}}>НДС (22%)</Text>
+                <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '700'}}>{formatKzt(result.nds)}</Text>
+              </View>
+              <View style={[styles.resultRow, {borderTopWidth: 1, borderTopColor: colors.borderColor, paddingTop: 10}]}>
+                <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '600'}}>Итоговая сумма обеспечения</Text>
+                <Text style={{color: brand.teal600, fontSize: 17, fontWeight: '800'}}>{formatKzt(result.total)}</Text>
+              </View>
+              <Text style={{color: colors.textMuted, fontSize: 11, lineHeight: 16}}>
+                Расчёт выполнен по курсу Нацбанка РК. Точные суммы уточняйте у таможенного брокера.
+              </Text>
+            </Card>
+
+            <Card style={{gap: 2, padding: 0, overflow: 'hidden'}}>
+              <Text style={[styles.sectionTitle, {color: colors.textPrimary, padding: 16, paddingBottom: 8}]}>
+                Детали расчёта по товарам
+              </Text>
+              {result.perGood.map(({row, share}, i) => {
+                const rowTotal = Math.round(result.total * share);
+                const rowDuty = Math.round(result.duty * share);
+                const rowNds = Math.round(result.nds * share);
+                const rowNdsBasis = Math.round(result.ndsBasis * share);
+                const open = openDetailId === row.id;
+                return (
+                  <View key={row.id} style={[styles.detailBlock, {borderTopColor: colors.borderColor}]}>
+                    <TouchableOpacity
+                      style={styles.detailRow}
+                      onPress={() => setOpenDetailId(open ? null : row.id)}>
+                      <Text style={{color: colors.textPrimary, fontSize: 12, fontWeight: '600', width: 20}}>{i + 1}</Text>
+                      <Text style={{color: colors.textPrimary, fontSize: 12, fontWeight: '600', flex: 1}} numberOfLines={1}>
+                        {row.tnvedCode || '–'}
+                      </Text>
+                      <Text style={{color: colors.textPrimary, fontSize: 12, fontWeight: '700'}}>
+                        {rowTotal.toLocaleString('ru-RU')} ₸
+                      </Text>
+                      <Text style={{color: colors.textMuted, fontSize: 14, marginLeft: 8}}>{open ? '⌃' : '⌄'}</Text>
+                    </TouchableOpacity>
+                    {open ? (
+                      <View style={[styles.detailBody, {backgroundColor: colors.bgScreen, borderTopColor: colors.borderColor}]}>
+                        {[
+                          ['Ввозная таможенная пошлина', result.base * share, '5%', rowDuty],
+                          ['Акциз', 0, 'Не распр.', 0],
+                          ['Антидемпинговая пошлина', 0, 'Не распр.', 0],
+                          ['НДС', rowNdsBasis, '22%', rowNds],
+                        ].map(([name, basis, rate, sum]) => (
+                          <View key={name as string} style={styles.detailPayRow}>
+                            <Text style={{color: colors.textPrimary, fontSize: 11, flex: 1}}>{name}</Text>
+                            <Text style={{color: colors.textSecondary, fontSize: 11, width: 80}}>
+                              {Math.round(basis as number).toLocaleString('ru-RU')}
+                            </Text>
+                            <Text style={{color: colors.textSecondary, fontSize: 11, width: 56}}>{rate}</Text>
+                            <Text style={{color: colors.textPrimary, fontSize: 11, fontWeight: '700', width: 64, textAlign: 'right'}}>
+                              {Math.round(sum as number).toLocaleString('ru-RU')}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </Card>
+
+            <TouchableOpacity onPress={resetCalc} style={{alignSelf: 'center'}}>
               <Text style={{color: brand.teal600, fontWeight: '600', fontSize: 13}}>Новый расчёт</Text>
             </TouchableOpacity>
-          </Card>
+          </>
         ) : null}
       </ScrollView>
 
@@ -235,4 +375,10 @@ const styles = StyleSheet.create({
   transportTab: {flex: 1, paddingVertical: 9, borderRadius: 8, borderWidth: 1, alignItems: 'center'},
   resultRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
   footer: {position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, borderTopWidth: 1},
+  schemeHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'},
+  schemeRow: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1},
+  detailBlock: {borderTopWidth: 1},
+  detailRow: {flexDirection: 'row', alignItems: 'center', padding: 12, gap: 4},
+  detailBody: {padding: 10, borderTopWidth: 1, gap: 4},
+  detailPayRow: {flexDirection: 'row', alignItems: 'center', paddingVertical: 3},
 });

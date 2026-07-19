@@ -392,6 +392,111 @@ export function tnvedSearch(query: string): {code: string; name: string; confide
     .slice(0, 8);
 }
 
+export type TnvedPermit = {name: string; note: string; url?: string};
+export type TnvedResult = {
+  code: string;
+  name: string;
+  duty: string;
+  vat: string;
+  excise: string;
+  conf: 'high' | 'mid';
+  pct: number;
+  permits: TnvedPermit[];
+};
+
+const TNVED_MOCK: Record<string, TnvedResult[]> = {
+  'ноутбук': [
+    {
+      code: '8471 30 000 1',
+      name: 'Портативные машины АОД (ноутбуки, планшеты)',
+      duty: '0%',
+      vat: '12%',
+      excise: '—',
+      conf: 'high',
+      pct: 94,
+      permits: [
+        {
+          name: 'Декларация соответствия ТР ТС 020',
+          note: 'электромагнитная совместимость — обязательна',
+          url: 'https://egov.kz/cms/ru/services/437pass_knb',
+        },
+      ],
+    },
+    {
+      code: '8471 41 000 0',
+      name: 'Машины АОД прочие, с дисплеем в одном корпусе',
+      duty: '0%',
+      vat: '12%',
+      excise: '—',
+      conf: 'mid',
+      pct: 72,
+      permits: [
+        {
+          name: 'Декларация соответствия ТР ТС 020',
+          note: 'электромагнитная совместимость — обязательна',
+          url: 'https://egov.kz/cms/ru/services/437pass_knb',
+        },
+      ],
+    },
+  ],
+  'запчасти': [
+    {
+      code: '8708 99 970 9',
+      name: 'Части и принадлежности для автомобилей прочие',
+      duty: '5%',
+      vat: '12%',
+      excise: '—',
+      conf: 'high',
+      pct: 88,
+      permits: [{name: 'Декларация соответствия ТР ТС 018', note: 'безопасность колёсных транспортных средств'}],
+    },
+    {
+      code: '8431 49 900 0',
+      name: 'Части машин и механизмов прочие',
+      duty: '0%',
+      vat: '12%',
+      excise: '—',
+      conf: 'mid',
+      pct: 65,
+      permits: [],
+    },
+  ],
+  'телефон': [
+    {
+      code: '8517 12 000 0',
+      name: 'Телефоны для сотовых сетей, смартфоны',
+      duty: '0%',
+      vat: '12%',
+      excise: '—',
+      conf: 'high',
+      pct: 98,
+      permits: [
+        {
+          name: 'Декларация соответствия ТР ТС 020',
+          note: 'электромагнитная совместимость — обязательна',
+          url: 'https://egov.kz/cms/ru/services/437pass_knb',
+        },
+        {name: 'Нотификация о ввозе шифровальных средств', note: 'обязательна для смартфонов с шифрованием'},
+      ],
+    },
+  ],
+  'бумага': [
+    {code: '4802 56 800 0', name: 'Бумага и картон для письма/печати, немелованные', duty: '5%', vat: '12%', excise: '—', conf: 'high', pct: 91, permits: []},
+    {code: '4810 13 800 0', name: 'Бумага мелованная прочая', duty: '5%', vat: '12%', excise: '—', conf: 'mid', pct: 63, permits: []},
+  ],
+  'default': [
+    {code: '9999 00 000 0', name: 'Прочие товары (уточните описание)', duty: '—', vat: '—', excise: '—', conf: 'mid', pct: 40, permits: []},
+  ],
+};
+
+export function tnvedDetailedSearch(query: string): TnvedResult[] {
+  const q = query.trim().toLowerCase();
+  for (const key of Object.keys(TNVED_MOCK)) {
+    if (key !== 'default' && q.indexOf(key) !== -1) return TNVED_MOCK[key];
+  }
+  return TNVED_MOCK.default;
+}
+
 export const kbkRows = [
   {
     code: '105102',
@@ -466,6 +571,7 @@ export const fallbackRates: {code: string; name: string; rate: number}[] = [
 
 export type ContractJournalEntry = {
   id: string;
+  type: 'ПИ' | 'ТД' | 'ДТ';
   regNumber: string;
   product: string;
   tnved: string;
@@ -500,6 +606,7 @@ export const contractStats: Record<string, ContractStats> = {
     journal: [
       {
         id: 'j1',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250612/101523/0012847',
         product: 'Ноутбуки HP ProBook 450',
         tnved: '8471 30 000 1',
@@ -514,6 +621,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j2',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250605/101523/0012710',
         product: 'Мониторы 27"',
         tnved: '8528 52 000 0',
@@ -528,6 +636,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j3',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250528/101523/0012461',
         product: 'Смартфоны',
         tnved: '8517 13 000 0',
@@ -542,6 +651,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j4',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250520/101523/0012298',
         product: 'Планшеты',
         tnved: '8471 30 000 1',
@@ -556,6 +666,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j5',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250515/101523/0012109',
         product: 'Аксессуары и кабели',
         tnved: '8473 30 800 0',
@@ -570,6 +681,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j6',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250507/101523/0011980',
         product: 'Сетевое оборудование',
         tnved: '8517 62 000 0',
@@ -584,6 +696,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j7',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250428/101523/0011802',
         product: 'Внешние накопители',
         tnved: '8471 70 980 0',
@@ -598,6 +711,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j8',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250419/101523/0011655',
         product: 'Источники питания',
         tnved: '8504 40 900 0',
@@ -612,6 +726,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j9',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250410/101523/0011501',
         product: 'Веб-камеры',
         tnved: '8525 80 190 0',
@@ -626,6 +741,7 @@ export const contractStats: Record<string, ContractStats> = {
       },
       {
         id: 'j10',
+        type: 'ДТ',
         regNumber: 'ИМ40 20250401/101523/0011340',
         product: 'Гарнитуры',
         tnved: '8518 30 000 0',

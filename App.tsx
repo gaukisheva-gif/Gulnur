@@ -10,6 +10,7 @@ import {GestureHandlerRootView} from 'react-native-gesture-handler';
 import {SafeAreaProvider} from 'react-native-safe-area-context';
 import {NavigationContainer} from '@react-navigation/native';
 import {ThemeProvider, useTheme} from './src/theme/ThemeContext';
+import {ToastProvider} from './src/components/Toast';
 import RootNavigator from './src/navigation/RootNavigator';
 
 function AppContent() {
@@ -35,7 +36,9 @@ function AppContent() {
         },
       }}>
       <StatusBar barStyle={isDark ? 'light-content' : 'dark-content'} backgroundColor={colors.statusBarBg} />
-      <RootNavigator />
+      <ToastProvider>
+        <RootNavigator />
+      </ToastProvider>
     </NavigationContainer>
   );
 }

@@ -10,7 +10,7 @@ export type RootStackParamList = {
   Main: undefined;
   Profile: undefined;
   Services: undefined;
-  Calculator: undefined;
+  Calculator: {prefillTnvedCode?: string; prefillKind?: 'deposit' | 'tpin'} | undefined;
   Tnved: undefined;
   Accounts: undefined;
   Rates: undefined;
