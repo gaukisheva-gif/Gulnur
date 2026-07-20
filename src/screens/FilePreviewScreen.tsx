@@ -6,25 +6,26 @@ import {Card} from '../components/Card';
 import {PrimaryButton} from '../components/Buttons';
 import {RootScreenProps} from '../navigation/types';
 
-const mockFiles = [
+const fallbackFiles = [
   {name: 'invoice_INV-2026-0612.pdf', size: '1.2 МБ'},
   {name: 'packing_list.xlsx', size: '84 КБ'},
 ];
 
-export default function FilePreviewScreen({navigation}: RootScreenProps<'FilePreview'>) {
+export default function FilePreviewScreen({navigation, route}: RootScreenProps<'FilePreview'>) {
   const {colors} = useTheme();
+  const files = route.params?.files?.length ? route.params.files : fallbackFiles;
 
   return (
     <View style={[styles.container, {backgroundColor: colors.bgScreen}]}>
       <ScreenHeader title="Файлы выбраны" onBack={() => navigation.goBack()} />
       <ScrollView contentContainerStyle={styles.body}>
         <Card style={{gap: 0, padding: 0, overflow: 'hidden'}}>
-          {mockFiles.map((f, idx) => (
+          {files.map((f, idx) => (
             <View
-              key={f.name}
+              key={f.name + idx}
               style={[
                 styles.fileRow,
-                idx < mockFiles.length - 1 ? {borderBottomWidth: 1, borderBottomColor: colors.borderColor} : null,
+                idx < files.length - 1 ? {borderBottomWidth: 1, borderBottomColor: colors.borderColor} : null,
               ]}>
               <Text style={[styles.fileName, {color: colors.textPrimary}]} numberOfLines={1}>
                 {f.name}
@@ -36,8 +37,7 @@ export default function FilePreviewScreen({navigation}: RootScreenProps<'FilePre
 
         <View style={[styles.totalRow, {backgroundColor: colors.bgCard}]}>
           <View>
-            <Text style={{color: colors.textSecondary, fontSize: 13}}>Итого файлов: {mockFiles.length}</Text>
-            <Text style={{color: colors.textMuted, fontSize: 11, marginTop: 2}}>1.3 МБ</Text>
+            <Text style={{color: colors.textSecondary, fontSize: 13}}>Итого файлов: {files.length}</Text>
           </View>
           <View style={[styles.readyBadge, {backgroundColor: colors.greenBg}]}>
             <Text style={{color: colors.green, fontSize: 13, fontWeight: '600'}}>Готово к отправке</Text>

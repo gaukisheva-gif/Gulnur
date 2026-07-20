@@ -2,6 +2,8 @@ import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
 import {CompositeScreenProps} from '@react-navigation/native';
 
+export type PickedFile = {name: string; size: string; uri?: string};
+
 export type RootStackParamList = {
   Splash: undefined;
   Landing: undefined;
@@ -19,7 +21,7 @@ export type RootStackParamList = {
   Choice: undefined;
   Camera: undefined;
   AIRecognized: undefined;
-  FilePreview: undefined;
+  FilePreview: {files: PickedFile[]} | undefined;
   PrivacyPolicy: undefined;
   Terms: undefined;
 };

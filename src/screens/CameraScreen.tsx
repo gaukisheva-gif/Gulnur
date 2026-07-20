@@ -1,12 +1,43 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {launchCamera} from 'react-native-image-picker';
 import {useTheme} from '../theme/ThemeContext';
+import {brand} from '../theme/colors';
 import {BackLink} from '../components/ScreenHeader';
 import {FlashIcon, QrIcon} from '../components/Icon';
+import {PermissionRationaleModal} from '../components/PermissionRationaleModal';
+import {useToast} from '../components/Toast';
+import {ensureCameraPermission, openAppSettings} from '../utils/mediaPermissions';
 import {RootScreenProps} from '../navigation/types';
 
 export default function CameraScreen({navigation}: RootScreenProps<'Camera'>) {
   const {colors} = useTheme();
+  const {showToast} = useToast();
+  const [rationaleVisible, setRationaleVisible] = useState(false);
+
+  const denyWithSettingsPrompt = () => {
+    showToast('Нет доступа к камере', 'Разрешите доступ к камере в настройках телефона, чтобы сфотографировать документ.');
+    openAppSettings();
+  };
+
+  const capturePhoto = async () => {
+    const granted = await ensureCameraPermission();
+    if (!granted) {
+      denyWithSettingsPrompt();
+      return;
+    }
+    const result = await launchCamera({mediaType: 'photo', saveToPhotos: false});
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      if (result.errorCode === 'permission') {
+        denyWithSettingsPrompt();
+      } else {
+        showToast('Не удалось сделать фото', result.errorMessage ?? 'Попробуйте ещё раз');
+      }
+      return;
+    }
+    navigation.replace('AIRecognized');
+  };
 
   return (
     <View style={[styles.container, {backgroundColor: colors.bgScreen}]}>
@@ -38,13 +69,25 @@ export default function CameraScreen({navigation}: RootScreenProps<'Camera'>) {
         <View style={[styles.smallBtn, {backgroundColor: colors.bgCard, borderColor: colors.borderInput}]}>
           <QrIcon size={20} color={colors.textSecondary} />
         </View>
-        <TouchableOpacity style={styles.shutter} onPress={() => navigation.replace('AIRecognized')}>
+        <TouchableOpacity style={styles.shutter} onPress={() => setRationaleVisible(true)}>
           <View style={styles.shutterInner} />
         </TouchableOpacity>
         <View style={[styles.smallBtn, {backgroundColor: colors.bgCard, borderColor: colors.borderInput}]}>
           <FlashIcon size={20} color={colors.textSecondary} />
         </View>
       </View>
+
+      <PermissionRationaleModal
+        visible={rationaleVisible}
+        icon={<QrIcon size={26} color={brand.teal600} />}
+        title="Доступ к камере"
+        message="Камера используется только для фотографирования этого документа — снимок не сохраняется в галерею и не используется ни для чего другого."
+        onConfirm={() => {
+          setRationaleVisible(false);
+          capturePhoto();
+        }}
+        onCancel={() => setRationaleVisible(false)}
+      />
     </View>
   );
 }

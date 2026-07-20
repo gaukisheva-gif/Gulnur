@@ -1,6 +1,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Needed only to photograph documents (e.g. invoices) for the declaration draft flow.
+         Requested at runtime with an in-app rationale before the system dialog is shown;
+         gallery/file picking uses the system picker and needs no storage permission. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 
     <application
       android:name=".MainApplication"
