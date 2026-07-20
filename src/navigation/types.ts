@@ -20,6 +20,8 @@ export type RootStackParamList = {
   Camera: undefined;
   AIRecognized: undefined;
   FilePreview: undefined;
+  PrivacyPolicy: undefined;
+  Terms: undefined;
 };
 
 export type MainTabParamList = {

@@ -52,7 +52,19 @@ function PasswordField({
   );
 }
 
-function Checkbox({checked, onToggle, label}: {checked: boolean; onToggle: () => void; label: string}) {
+function Checkbox({
+  checked,
+  onToggle,
+  prefix,
+  linkLabel,
+  onLinkPress,
+}: {
+  checked: boolean;
+  onToggle: () => void;
+  prefix: string;
+  linkLabel: string;
+  onLinkPress: () => void;
+}) {
   const {colors} = useTheme();
   return (
     <TouchableOpacity style={styles.checkboxRow} onPress={onToggle} activeOpacity={0.7}>
@@ -66,7 +78,12 @@ function Checkbox({checked, onToggle, label}: {checked: boolean; onToggle: () =>
         ]}>
         {checked ? <Text style={styles.checkboxTick}>✓</Text> : null}
       </View>
-      <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>{label}</Text>
+      <Text style={[styles.checkboxLabel, {color: colors.textSecondary}]}>
+        {prefix}
+        <Text style={{color: brand.teal600, fontWeight: '700', textDecorationLine: 'underline'}} onPress={onLinkPress}>
+          {linkLabel}
+        </Text>
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -129,11 +146,19 @@ export default function RegisterScreen({navigation}: RootScreenProps<'Register'>
           </View>
 
           <View style={styles.checkboxGroup}>
-            <Checkbox checked={agree1} onToggle={() => setAgree1(v => !v)} label="Я ознакомился с пользовательским соглашением" />
+            <Checkbox
+              checked={agree1}
+              onToggle={() => setAgree1(v => !v)}
+              prefix="Я ознакомился с "
+              linkLabel="пользовательским соглашением"
+              onLinkPress={() => navigation.navigate('Terms')}
+            />
             <Checkbox
               checked={agree2}
               onToggle={() => setAgree2(v => !v)}
-              label="Я согласен(а) на сбор и обработку персональных данных"
+              prefix="Я согласен(а) на сбор и обработку персональных данных согласно "
+              linkLabel="Политике конфиденциальности"
+              onLinkPress={() => navigation.navigate('PrivacyPolicy')}
             />
           </View>
 

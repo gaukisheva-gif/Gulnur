@@ -1,15 +1,36 @@
 import React, {useState} from 'react';
-import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
 import {ScreenHeader} from '../components/ScreenHeader';
 import {ChevronRightIcon} from '../components/Icon';
+import {useToast} from '../components/Toast';
 import {RootScreenProps} from '../navigation/types';
 
 export default function ProfileScreen({navigation}: RootScreenProps<'Profile'>) {
   const {colors, isDark, toggleTheme} = useTheme();
+  const {showToast} = useToast();
   const [pushEnabled, setPushEnabled] = useState(true);
+
+  const confirmDeleteAccount = () => {
+    Alert.alert(
+      'Удалить аккаунт?',
+      'Это действие необратимо. Будет отправлен запрос на удаление вашей учётной записи и всех связанных персональных данных ' +
+        '(профиль, контракты, декларации, документы). Доступ к приложению будет немедленно прекращён.',
+      [
+        {text: 'Отмена', style: 'cancel'},
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: () => {
+            showToast('Запрос на удаление отправлен', 'Учётная запись и данные будут удалены в ближайшее время');
+            navigation.reset({index: 0, routes: [{name: 'Landing'}]});
+          },
+        },
+      ],
+    );
+  };
 
   return (
     <View style={[styles.container, {backgroundColor: colors.bgScreen}]}>
@@ -55,11 +76,23 @@ export default function ProfileScreen({navigation}: RootScreenProps<'Profile'>) 
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.settingsItemLast} onPress={() => setPushEnabled(prev => !prev)}>
+          <TouchableOpacity style={[styles.settingsItem, {borderBottomColor: colors.borderColor}]} onPress={() => setPushEnabled(prev => !prev)}>
             <Text style={[styles.settingsLabel, {color: colors.textPrimary}]}>Уведомления на телефон</Text>
             <Text style={{color: pushEnabled ? colors.green : colors.textMuted, fontSize: 14, fontWeight: '600'}}>
               {pushEnabled ? '✓ Включены' : 'Выключены'}
             </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.settingsItem, {borderBottomColor: colors.borderColor}]}
+            onPress={() => navigation.navigate('PrivacyPolicy')}>
+            <Text style={[styles.settingsLabel, {color: colors.textPrimary}]}>Политика конфиденциальности</Text>
+            <ChevronRightIcon size={16} color={colors.textMuted} />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.settingsItemLast} onPress={() => navigation.navigate('Terms')}>
+            <Text style={[styles.settingsLabel, {color: colors.textPrimary}]}>Пользовательское соглашение</Text>
+            <ChevronRightIcon size={16} color={colors.textMuted} />
           </TouchableOpacity>
         </View>
 
@@ -67,6 +100,10 @@ export default function ProfileScreen({navigation}: RootScreenProps<'Profile'>) 
           style={[styles.logoutBtn, {backgroundColor: colors.bgCard, borderColor: colors.logoutBorder}]}
           onPress={() => navigation.reset({index: 0, routes: [{name: 'Landing'}]})}>
           <Text style={styles.logoutText}>Выйти</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteAccountBtn} onPress={confirmDeleteAccount}>
+          <Text style={[styles.deleteAccountText, {color: colors.textMuted}]}>Удалить аккаунт</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -99,4 +136,6 @@ const styles = StyleSheet.create({
   toggleThumb: {width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff'},
   logoutBtn: {borderRadius: 999, borderWidth: 1, padding: 16, alignItems: 'center'},
   logoutText: {color: '#dc2626', fontSize: 16, fontWeight: '600'},
+  deleteAccountBtn: {padding: 12, alignItems: 'center'},
+  deleteAccountText: {fontSize: 13, fontWeight: '500', textDecorationLine: 'underline'},
 });
