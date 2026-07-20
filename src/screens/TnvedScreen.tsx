@@ -75,13 +75,9 @@ export default function TnvedScreen({navigation}: RootScreenProps<'Tnved'>) {
         <Card style={{gap: 10}}>
           <Text style={[styles.searchLabel, {color: colors.textPrimary}]}>Введите ключевые слова</Text>
           <View style={styles.searchRow}>
-            <TextField
-              placeholder="Опишите товар"
-              value={query}
-              onChangeText={setQuery}
-              onSubmitEditing={runSearch}
-              style={{flex: 1}}
-            />
+            <View style={styles.searchInputWrap}>
+              <TextField placeholder="Опишите товар" value={query} onChangeText={setQuery} onSubmitEditing={runSearch} />
+            </View>
             <TouchableOpacity style={[styles.findBtn, {backgroundColor: brand.teal500}]} onPress={runSearch}>
               <SearchIcon size={15} color="#fff" />
               <Text style={styles.findBtnText}>Найти</Text>
@@ -229,8 +225,18 @@ const styles = StyleSheet.create({
   container: {flex: 1},
   body: {padding: 16, paddingBottom: 40, gap: 16},
   searchLabel: {fontSize: 13, fontWeight: '700', textAlign: 'center'},
-  searchRow: {flexDirection: 'row', gap: 8},
-  findBtn: {flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, borderRadius: 8, justifyContent: 'center'},
+  searchRow: {flexDirection: 'row', gap: 8, alignItems: 'flex-start'},
+  searchInputWrap: {flex: 1, minWidth: 0},
+  findBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    flexShrink: 0,
+    flexGrow: 0,
+  },
   findBtnText: {color: '#fff', fontSize: 14, fontWeight: '600'},
   hint: {fontSize: 11, lineHeight: 16},
   limitBanner: {
