@@ -15,7 +15,11 @@ type PrimaryButtonProps = {
 
 export function PrimaryButton({label, onPress, icon, loading, disabled, style}: PrimaryButtonProps) {
   return (
-    <TouchableOpacity activeOpacity={0.85} onPress={onPress} disabled={disabled || loading} style={style}>
+    <TouchableOpacity
+      activeOpacity={0.85}
+      onPress={onPress}
+      disabled={disabled || loading}
+      style={[disabled ? null : styles.primaryBtnShadow, style]}>
       <LinearGradient
         colors={[brand.teal400, brand.teal500, brand.teal600]}
         start={{x: 0, y: 0}}
@@ -107,6 +111,14 @@ export function FilterChip({
 }
 
 const styles = StyleSheet.create({
+  primaryBtnShadow: {
+    borderRadius: 999,
+    shadowColor: brand.teal600,
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    shadowOffset: {width: 0, height: 6},
+    elevation: 8,
+  },
   primaryBtn: {
     paddingVertical: 16,
     borderRadius: 999,

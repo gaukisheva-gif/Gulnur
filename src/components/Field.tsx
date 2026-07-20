@@ -84,6 +84,7 @@ export function SelectField({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setOpen(false)}>
           <Pressable style={[styles.modalSheet, {backgroundColor: colors.bgCard}]}>
+            <View style={styles.modalHandle} />
             <Text style={[styles.modalTitle, {color: colors.textPrimary}]}>{label || placeholder}</Text>
             <FlatList
               data={options}
@@ -146,12 +147,20 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalSheet: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingTop: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
     paddingBottom: 24,
     paddingHorizontal: 16,
     maxHeight: '70%',
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(148,163,184,0.4)',
+    alignSelf: 'center',
+    marginBottom: 12,
   },
   modalTitle: {
     fontSize: 15,
