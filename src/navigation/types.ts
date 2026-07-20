@@ -19,7 +19,6 @@ export type RootStackParamList = {
   LicenseDetail: {licenseId: string};
   ContractDetail: {contractId: string};
   Choice: undefined;
-  Camera: undefined;
   AIRecognized: undefined;
   FilePreview: {files: PickedFile[]} | undefined;
   PrivacyPolicy: undefined;

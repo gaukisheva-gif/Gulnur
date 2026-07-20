@@ -2,12 +2,15 @@ import React, {useState} from 'react';
 import {ScrollView, StyleSheet, Text, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {isErrorWithCode, errorCodes, pick, types} from '@react-native-documents/picker';
+import {launchCamera} from 'react-native-image-picker';
 import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
-import {OutlineButton, PrimaryButton} from '../components/Buttons';
-import {UploadIcon, ClipIcon} from '../components/Icon';
+import {PrimaryButton} from '../components/Buttons';
+import {UploadIcon, ClipIcon, QrIcon} from '../components/Icon';
+import {AddDocumentModal} from '../components/AddDocumentModal';
 import {PermissionRationaleModal} from '../components/PermissionRationaleModal';
 import {useToast} from '../components/Toast';
+import {ensureCameraPermission, openAppSettings} from '../utils/mediaPermissions';
 import {MainTabScreenProps} from '../navigation/types';
 
 function formatSize(bytes: number | null): string {
@@ -16,10 +19,37 @@ function formatSize(bytes: number | null): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)} МБ`;
 }
 
+type Rationale = 'camera' | 'file' | null;
+
 export default function ChoiceScreen({navigation}: MainTabScreenProps<'NewDeclaration'>) {
   const {colors} = useTheme();
   const {showToast} = useToast();
-  const [rationaleVisible, setRationaleVisible] = useState(false);
+  const [addDocVisible, setAddDocVisible] = useState(false);
+  const [rationale, setRationale] = useState<Rationale>(null);
+
+  const denyWithSettingsPrompt = () => {
+    showToast('Нет доступа к камере', 'Разрешите доступ к камере в настройках телефона, чтобы сфотографировать документ.');
+    openAppSettings();
+  };
+
+  const capturePhoto = async () => {
+    const granted = await ensureCameraPermission();
+    if (!granted) {
+      denyWithSettingsPrompt();
+      return;
+    }
+    const result = await launchCamera({mediaType: 'photo', saveToPhotos: false});
+    if (result.didCancel) return;
+    if (result.errorCode) {
+      if (result.errorCode === 'permission') {
+        denyWithSettingsPrompt();
+      } else {
+        showToast('Не удалось сделать фото', result.errorMessage ?? 'Попробуйте ещё раз');
+      }
+      return;
+    }
+    navigation.navigate('AIRecognized');
+  };
 
   const pickFiles = async () => {
     try {
@@ -50,12 +80,10 @@ export default function ChoiceScreen({navigation}: MainTabScreenProps<'NewDeclar
           <Text style={{color: colors.textMuted, fontSize: 14}}>Перетащите файлы сюда</Text>
           <PrimaryButton
             label="Добавить документ к контракту"
-            onPress={() => setRationaleVisible(true)}
+            onPress={() => setAddDocVisible(true)}
             style={{width: '100%', marginTop: 10}}
           />
         </View>
-
-        <OutlineButton label="Сфотографировать инвойс" onPress={() => navigation.navigate('Camera')} />
 
         <View style={[styles.hintBox, {backgroundColor: colors.brand50, borderColor: colors.brand100}]}>
           <Text style={[styles.hintTitle, {color: colors.textPrimary}]}>Как это работает</Text>
@@ -66,16 +94,41 @@ export default function ChoiceScreen({navigation}: MainTabScreenProps<'NewDeclar
         </View>
       </ScrollView>
 
+      <AddDocumentModal
+        visible={addDocVisible}
+        onClose={() => setAddDocVisible(false)}
+        onPickCamera={() => {
+          setAddDocVisible(false);
+          setRationale('camera');
+        }}
+        onPickFile={() => {
+          setAddDocVisible(false);
+          setRationale('file');
+        }}
+      />
+
       <PermissionRationaleModal
-        visible={rationaleVisible}
+        visible={rationale === 'camera'}
+        icon={<QrIcon size={26} color={brand.teal600} />}
+        title="Доступ к камере"
+        message="Камера используется только для фотографирования этого документа — снимок не сохраняется в галерею и не используется ни для чего другого."
+        onConfirm={() => {
+          setRationale(null);
+          capturePhoto();
+        }}
+        onCancel={() => setRationale(null)}
+      />
+
+      <PermissionRationaleModal
+        visible={rationale === 'file'}
         icon={<ClipIcon size={26} color={brand.teal600} />}
         title="Доступ к файлам"
         message="Чтобы прикрепить документ к контракту, откроется системный выбор файлов. Приложение получает доступ только к тому файлу, который вы сами выберете, — не ко всему хранилищу устройства."
         onConfirm={() => {
-          setRationaleVisible(false);
+          setRationale(null);
           pickFiles();
         }}
-        onCancel={() => setRationaleVisible(false)}
+        onCancel={() => setRationale(null)}
       />
     </View>
   );
