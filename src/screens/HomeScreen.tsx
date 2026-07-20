@@ -5,7 +5,7 @@ import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
 import {CurrencyTicker} from '../components/CurrencyTicker';
 import {StatusBadge} from '../components/StatusBadge';
-import {WarningIcon, DocumentsIcon, CalculatorIcon, SearchIcon, BuildingIcon} from '../components/Icon';
+import {WarningIcon, DocumentsIcon, CalculatorIcon, SearchIcon, BuildingIcon, ChevronRightIcon} from '../components/Icon';
 import {declarations} from '../data/mockData';
 import {MainTabScreenProps} from '../navigation/types';
 
@@ -13,10 +13,11 @@ export default function HomeScreen({navigation}: MainTabScreenProps<'Home'>) {
   const {colors} = useTheme();
 
   const quickActions = [
-    {label: 'Документы и ДТ', icon: DocumentsIcon, gradient: [brand.teal400, brand.teal600], onPress: () => navigation.navigate('Documents')},
-    {label: 'Калькулятор', icon: CalculatorIcon, gradient: [brand.teal400, brand.teal600], onPress: () => navigation.navigate('Calculator')},
-    {label: 'Автоподбор ТНВЭД', icon: SearchIcon, gradient: [brand.teal400, brand.teal600], onPress: () => navigation.navigate('Tnved')},
-    {label: 'Лицевые счета', icon: BuildingIcon, gradient: ['#fb923c', '#ea580c'], onPress: () => navigation.navigate('Accounts')},
+    {label: 'Документы и ДТ', icon: DocumentsIcon, badge: true, onPress: () => navigation.navigate('Documents')},
+    {label: 'Калькулятор', icon: CalculatorIcon, onPress: () => navigation.navigate('Calculator')},
+    {label: 'Автоподбор ТНВЭД', icon: SearchIcon, onPress: () => navigation.navigate('Tnved')},
+    {label: 'Лицевые счета', icon: BuildingIcon, onPress: () => navigation.navigate('Accounts')},
+    {label: 'Калькулятор ТПиН', icon: CalculatorIcon, onPress: () => navigation.navigate('Calculator', {prefillKind: 'tpin'})},
   ];
 
   return (
@@ -33,18 +34,25 @@ export default function HomeScreen({navigation}: MainTabScreenProps<'Home'>) {
 
         <CurrencyTicker onPress={() => navigation.navigate('Rates')} />
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.quickRow}>
+        <View style={styles.quickList}>
           {quickActions.map(action => (
-            <TouchableOpacity key={action.label} style={styles.quickItem} onPress={action.onPress}>
-              <LinearGradient colors={action.gradient} style={styles.quickIcon}>
-                <action.icon size={24} color="#fff" />
-              </LinearGradient>
-              <Text style={[styles.quickLabel, {color: colors.textPrimary}]} numberOfLines={2}>
-                {action.label}
-              </Text>
+            <TouchableOpacity
+              key={action.label}
+              style={[styles.quickRow, {backgroundColor: colors.bgCard}]}
+              onPress={action.onPress}>
+              <View style={[styles.quickIcon, {backgroundColor: colors.brand50}]}>
+                <action.icon size={22} color={brand.teal600} />
+                {action.badge ? (
+                  <View style={styles.quickBadge}>
+                    <Text style={styles.quickBadgeText}>!</Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text style={[styles.quickLabel, {color: colors.textPrimary}]}>{action.label}</Text>
+              <ChevronRightIcon size={16} color={colors.textMuted} />
             </TouchableOpacity>
           ))}
-        </ScrollView>
+        </View>
 
         <TouchableOpacity
           style={[styles.warningBanner, {backgroundColor: colors.warningBg, borderColor: colors.warningBorder}]}
@@ -113,10 +121,39 @@ const styles = StyleSheet.create({
   companyName: {fontSize: 20, fontWeight: '700', letterSpacing: -0.2, marginTop: 6, flex: 1, paddingRight: 12},
   avatar: {width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center'},
   avatarText: {color: '#fff', fontSize: 14, fontWeight: '700'},
-  quickRow: {gap: 18, paddingHorizontal: 20, paddingBottom: 22},
-  quickItem: {alignItems: 'center', gap: 8, width: 72},
-  quickIcon: {width: 56, height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center'},
-  quickLabel: {fontSize: 12.5, fontWeight: '600', textAlign: 'center', lineHeight: 15},
+  quickList: {gap: 12, paddingHorizontal: 20, paddingBottom: 22},
+  quickRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    borderRadius: 18,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    shadowOffset: {width: 0, height: 2},
+  },
+  quickIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  quickBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickBadgeText: {color: '#fff', fontSize: 11, fontWeight: '700', lineHeight: 13},
+  quickLabel: {fontSize: 16, fontWeight: '500', flex: 1},
   warningBanner: {
     marginHorizontal: 20,
     marginBottom: 18,
