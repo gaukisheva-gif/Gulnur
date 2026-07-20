@@ -556,6 +556,16 @@ export const kbkRows = [
   },
 ];
 
+export type Writeoff = {declaration: string; date: string; amount: string};
+
+export const kbkWriteoffs: Record<string, Writeoff[]> = {
+  '105102': [
+    {declaration: '55301/120626/0001466', date: '12.06.2026', amount: '95 200'},
+    {declaration: '55301/110626/0001464', date: '11.06.2026', amount: '87 200'},
+  ],
+  '105114': [{declaration: '55301/120626/0001466', date: '12.06.2026', amount: '25 000'}],
+};
+
 export const fallbackRates: {code: string; name: string; rate: number}[] = [
   {code: 'USD', name: 'Доллар США', rate: 480.72},
   {code: 'EUR', name: 'Евро', rate: 548.07},

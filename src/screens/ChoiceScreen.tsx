@@ -56,7 +56,7 @@ export default function ChoiceScreen({navigation}: MainTabScreenProps<'NewDeclar
       // Uses the system document/file picker (Storage Access Framework on Android,
       // UIDocumentPickerViewController on iOS) — no storage permission is required.
       const results = await pick({type: [types.pdf, types.xls, types.xlsx, types.images], allowMultiSelection: true});
-      const files = results.map(r => ({name: r.name ?? 'файл', size: formatSize(r.size), uri: r.uri}));
+      const files = results.map(r => ({name: r.name ?? 'файл', size: formatSize(r.size), uri: r.uri, bytes: r.size ?? undefined}));
       if (!files.length) return;
       navigation.navigate('FilePreview', {files});
     } catch (e) {

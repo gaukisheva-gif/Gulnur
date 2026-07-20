@@ -51,7 +51,7 @@ export default function ProfileScreen({navigation}: RootScreenProps<'Profile'>) 
         <View style={[styles.settingsList, {backgroundColor: colors.bgCard}]}>
           <TouchableOpacity
             style={[styles.settingsItem, {borderBottomColor: colors.borderColor}]}
-            onPress={() => navigation.navigate('Main')}>
+            onPress={() => navigation.navigate('Main', {screen: 'Notifications'})}>
             <Text style={[styles.settingsLabel, {color: colors.textPrimary}]}>Сообщения</Text>
             <View style={styles.settingsValueRow}>
               <View style={styles.badge}>

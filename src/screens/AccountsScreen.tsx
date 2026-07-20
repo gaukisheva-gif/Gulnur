@@ -1,15 +1,46 @@
-import React from 'react';
-import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useState} from 'react';
+import {ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
 import {ScreenHeader} from '../components/ScreenHeader';
 import {Card} from '../components/Card';
-import {DownloadIcon} from '../components/Icon';
+import {SelectField} from '../components/Field';
+import {DownloadIcon, RefreshIcon} from '../components/Icon';
+import {WriteoffDetailModal} from '../components/WriteoffDetailModal';
+import {useToast} from '../components/Toast';
 import {kbkRows} from '../data/mockData';
 import {RootScreenProps} from '../navigation/types';
 
+const periodOptions = [
+  'Сегодня',
+  'Последние 7 дней',
+  'Этот месяц (01.06.2026 – 25.06.2026)',
+  'Прошлый месяц',
+  'Весь период',
+];
+
 export default function AccountsScreen({navigation}: RootScreenProps<'Accounts'>) {
   const {colors} = useTheme();
+  const {showToast} = useToast();
+  const [period, setPeriod] = useState(periodOptions[2]);
+  const [kbk, setKbk] = useState('Все КБК');
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeRow, setActiveRow] = useState<(typeof kbkRows)[number] | null>(null);
+
+  const kbkOptions = ['Все КБК', ...kbkRows.map(r => `${r.code} — ${r.name}`)];
+
+  const requestUpdate = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+      showToast('Сальдо обновлено', 'Данные подтянуты из АРМ налогоплательщика КГД');
+    }, 1500);
+  };
+
+  const downloadReport = () => {
+    showToast('Отчёт формируется', `Период: ${period} · КБК: ${kbk}`);
+  };
 
   return (
     <View style={[styles.container, {backgroundColor: colors.bgScreen}]}>
@@ -37,15 +68,25 @@ export default function AccountsScreen({navigation}: RootScreenProps<'Accounts'>
           <Text style={{color: colors.textSecondary, fontSize: 12, lineHeight: 17}}>
             Укажите период и КБК — сформируем PDF со списаниями по декларациям (ДТ), с суммой по каждой.
           </Text>
-          <TouchableOpacity
-            style={[styles.pdfBtn, {backgroundColor: brand.teal600}]}
-            onPress={() => Alert.alert('Отчёт', 'Формирование PDF со списаниями за 01.06.2026—25.06.2026')}>
+          <SelectField label="Период" value={period} options={periodOptions} onChange={setPeriod} />
+          <SelectField label="КБК" value={kbk} options={kbkOptions} onChange={setKbk} />
+          <TouchableOpacity style={[styles.pdfBtn, {backgroundColor: brand.teal600}]} onPress={downloadReport}>
             <DownloadIcon size={14} color="#fff" />
             <Text style={styles.pdfBtnText}>Скачать PDF</Text>
           </TouchableOpacity>
         </Card>
 
-        <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>Разбивка по КБК</Text>
+        <View style={styles.sectionHeader}>
+          <Text style={[styles.sectionTitle, {color: colors.textPrimary}]}>Разбивка по КБК</Text>
+          <TouchableOpacity style={styles.refreshBtn} onPress={requestUpdate} disabled={refreshing}>
+            {refreshing ? (
+              <ActivityIndicator size="small" color={brand.teal600} />
+            ) : (
+              <RefreshIcon size={14} color={brand.teal600} />
+            )}
+            <Text style={{color: brand.teal600, fontSize: 12, fontWeight: '700'}}>Запросить актуальное</Text>
+          </TouchableOpacity>
+        </View>
         <View style={[styles.tableWrap, {backgroundColor: colors.bgCard, borderColor: colors.borderColor}]}>
           {kbkRows.map((row, idx) => (
             <TouchableOpacity
@@ -54,9 +95,7 @@ export default function AccountsScreen({navigation}: RootScreenProps<'Accounts'>
                 styles.kbkRow,
                 idx < kbkRows.length - 1 ? {borderBottomWidth: 1, borderBottomColor: colors.borderColor} : null,
               ]}
-              onPress={() =>
-                Alert.alert(row.name, `Сальдо: ${row.balance} ₸\nСписано: ${row.written} ₸`)
-              }>
+              onPress={() => setActiveRow(row)}>
               <Text style={[styles.kbkCode, {color: brand.teal600}]}>{row.code}</Text>
               <View style={{flex: 1}}>
                 <Text style={[styles.kbkName, {color: colors.textPrimary}]}>{row.name}</Text>
@@ -76,6 +115,8 @@ export default function AccountsScreen({navigation}: RootScreenProps<'Accounts'>
           ))}
         </View>
       </ScrollView>
+
+      <WriteoffDetailModal row={activeRow} onClose={() => setActiveRow(null)} />
     </View>
   );
 }
@@ -88,6 +129,8 @@ const styles = StyleSheet.create({
   kpiValue: {fontSize: 26, fontWeight: '700', letterSpacing: -0.5},
   kpiSub: {fontSize: 11, marginTop: 4},
   sectionTitle: {fontSize: 15, fontWeight: '700'},
+  sectionHeader: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6},
+  refreshBtn: {flexDirection: 'row', alignItems: 'center', gap: 5},
   pdfBtn: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: 8, paddingVertical: 12},
   pdfBtnText: {color: '#fff', fontSize: 13, fontWeight: '700'},
   tableWrap: {borderRadius: 14, borderWidth: 1, overflow: 'hidden'},

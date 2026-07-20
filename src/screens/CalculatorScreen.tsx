@@ -1,14 +1,16 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {isErrorWithCode, errorCodes, pick, types} from '@react-native-documents/picker';
 import {useTheme} from '../theme/ThemeContext';
 import {brand} from '../theme/colors';
 import {ScreenHeader} from '../components/ScreenHeader';
 import {Card} from '../components/Card';
 import {FieldLabel, SelectField, TextField} from '../components/Field';
 import {PrimaryButton} from '../components/Buttons';
-import {CalculatorIcon, PlusIcon, TrashIcon} from '../components/Icon';
+import {CalculatorIcon, PlusIcon, TrashIcon, UploadIcon} from '../components/Icon';
 import {TnvedPickerModal} from '../components/TnvedPickerModal';
 import {useToast} from '../components/Toast';
+import {fallbackRates} from '../data/mockData';
 import {RootScreenProps} from '../navigation/types';
 
 type GoodsRow = {
@@ -39,6 +41,7 @@ function formatKzt(value: number): string {
 
 const declTypes = ['Транзитная декларация', 'Декларация на товары', 'Пассажирская декларация'];
 const moveSpecs = ['ФЛ', 'ЮЛ', 'МП', 'СП'];
+const currencyOptions = ['KZT', ...fallbackRates.map(r => r.code)];
 
 type CalcResult = {
   duty: number;
@@ -71,6 +74,8 @@ export default function CalculatorScreen({navigation, route}: RootScreenProps<'C
   const [result, setResult] = useState<CalcResult | null>(null);
   const [schemeOpen, setSchemeOpen] = useState(true);
   const [openDetailId, setOpenDetailId] = useState<number | null>(null);
+  const [unifiedCurrency, setUnifiedCurrency] = useState(true);
+  const [currency, setCurrency] = useState('KZT');
 
   useEffect(() => {
     if (prefill?.prefillTnvedCode) {
@@ -96,6 +101,16 @@ export default function CalculatorScreen({navigation, route}: RootScreenProps<'C
 
   const updateRow = (id: number, patch: Partial<GoodsRow>) => {
     setRows(prev => prev.map(r => (r.id === id ? {...r, ...patch} : r)));
+  };
+
+  const importFromFile = async () => {
+    try {
+      const [file] = await pick({type: [types.xlsx, types.xls]});
+      showToast('Импорт начат', `Файл «${file.name ?? 'файл'}» получен — товары будут добавлены в таблицу ниже`);
+    } catch (e) {
+      if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) return;
+      showToast('Не удалось импортировать файл', 'Попробуйте ещё раз');
+    }
   };
 
   const runCalc = () => {
@@ -194,6 +209,30 @@ export default function CalculatorScreen({navigation, route}: RootScreenProps<'C
             onPress={addRow}>
             <PlusIcon size={14} color={brand.teal600} strokeWidth={2.5} />
             <Text style={{color: brand.teal600, fontSize: 12, fontWeight: '600'}}>Добавить товар</Text>
+          </TouchableOpacity>
+
+          <View style={[styles.currencyRow, {borderTopColor: colors.borderColor}]}>
+            <TouchableOpacity style={styles.currencyToggleRow} onPress={() => setUnifiedCurrency(v => !v)}>
+              <View style={[styles.toggleTrack, {backgroundColor: unifiedCurrency ? brand.teal600 : colors.borderInput}]}>
+                <View style={[styles.toggleThumb, unifiedCurrency ? {transform: [{translateX: 16}]} : null]} />
+              </View>
+              <Text style={{color: colors.textPrimary, fontSize: 13, fontWeight: '500', flex: 1}}>
+                Единая валюта для всех товаров
+              </Text>
+            </TouchableOpacity>
+            {unifiedCurrency ? (
+              <SelectField label="Валюта" value={currency} options={currencyOptions} onChange={setCurrency} />
+            ) : null}
+          </View>
+
+          <TouchableOpacity
+            style={[styles.importBtn, {borderColor: colors.borderInput, backgroundColor: colors.bgScreen}]}
+            onPress={importFromFile}>
+            <UploadIcon size={16} color={brand.teal600} />
+            <View style={{flex: 1}}>
+              <Text style={{color: brand.teal600, fontSize: 13, fontWeight: '600'}}>Импорт из файла</Text>
+              <Text style={{color: colors.textMuted, fontSize: 10.5, marginTop: 1}}>Формат: .xlsx · до 10 МБ</Text>
+            </View>
           </TouchableOpacity>
         </Card>
 
@@ -370,6 +409,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 8,
     paddingVertical: 9,
+  },
+  currencyRow: {borderTopWidth: 1, paddingTop: 12, gap: 10},
+  currencyToggleRow: {flexDirection: 'row', alignItems: 'center', gap: 10},
+  toggleTrack: {width: 36, height: 20, borderRadius: 10, padding: 2, justifyContent: 'center'},
+  toggleThumb: {width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff'},
+  importBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderRadius: 10,
+    padding: 12,
   },
   transportTabs: {flexDirection: 'row', borderRadius: 8, overflow: 'hidden', gap: 6},
   transportTab: {flex: 1, paddingVertical: 9, borderRadius: 8, borderWidth: 1, alignItems: 'center'},

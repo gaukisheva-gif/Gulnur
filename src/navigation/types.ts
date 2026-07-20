@@ -1,15 +1,15 @@
 import {NativeStackScreenProps} from '@react-navigation/native-stack';
 import {BottomTabScreenProps} from '@react-navigation/bottom-tabs';
-import {CompositeScreenProps} from '@react-navigation/native';
+import {CompositeScreenProps, NavigatorScreenParams} from '@react-navigation/native';
 
-export type PickedFile = {name: string; size: string; uri?: string};
+export type PickedFile = {name: string; size: string; uri?: string; bytes?: number};
 
 export type RootStackParamList = {
   Splash: undefined;
   Landing: undefined;
   Login: undefined;
   Register: undefined;
-  Main: undefined;
+  Main: NavigatorScreenParams<MainTabParamList> | undefined;
   Profile: undefined;
   Services: undefined;
   Calculator: {prefillTnvedCode?: string; prefillKind?: 'deposit' | 'tpin'} | undefined;
