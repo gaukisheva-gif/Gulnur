@@ -64,7 +64,12 @@ export default function TnvedScreen({navigation}: RootScreenProps<'Tnved'>) {
 
   return (
     <View style={[styles.container, {backgroundColor: colors.bgScreen}]}>
-      <ScreenHeader title="Автоподбор ТН ВЭД" onBack={() => navigation.goBack()} backLabel="Сервисы" />
+      <ScreenHeader
+        title="Автоподбор ТНВЭД"
+        subtitle="Опишите товар — подберём код ТН ВЭД и покажем, какие разрешительные документы нужны для его ввоза."
+        onBack={() => navigation.goBack()}
+        backLabel="Сервисы"
+      />
 
       <ScrollView contentContainerStyle={styles.body}>
         <Card style={{gap: 10}}>
