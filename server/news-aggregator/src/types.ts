@@ -1,4 +1,4 @@
-export type NewsSource = 'ALTA_SOFT' | 'EAEU' | 'KGD' | 'ZAKON_KZ';
+export type NewsSource = 'ALTA_SOFT' | 'EAEU' | 'ZAKON_KZ';
 
 export type NewsStatus = 'DRAFT' | 'PUBLISHED' | 'REJECTED' | 'DUPLICATE';
 

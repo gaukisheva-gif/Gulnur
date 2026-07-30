@@ -1,10 +1,9 @@
 import {RawCandidate} from '../types';
 import {fetchAltaSoftCandidates} from './altaSoft';
 import {fetchEaeuCandidates} from './eaeu';
-import {fetchKgdCandidates} from './kgd';
 import {fetchZakonKzCandidates} from './zakonKz';
 
-const fetchers = [fetchAltaSoftCandidates, fetchEaeuCandidates, fetchKgdCandidates, fetchZakonKzCandidates];
+const fetchers = [fetchAltaSoftCandidates, fetchEaeuCandidates, fetchZakonKzCandidates];
 
 export interface FetchAllResult {
   candidates: RawCandidate[];

@@ -1,9 +1,8 @@
-export type NewsSource = 'ALTA_SOFT' | 'EAEU' | 'KGD' | 'ZAKON_KZ';
+export type NewsSource = 'ALTA_SOFT' | 'EAEU' | 'ZAKON_KZ';
 
 export const sourceLabels: Record<NewsSource, string> = {
   ALTA_SOFT: 'Alta-Soft',
   EAEU: 'ЕЭК ЕАЭС',
-  KGD: 'КГД РК',
   ZAKON_KZ: 'Zakon.kz',
 };
 
