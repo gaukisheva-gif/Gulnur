@@ -66,6 +66,9 @@ export const CheckShieldIcon = stroke(
 export const ContractIcon = stroke(
   'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2',
 );
+export const NewspaperIcon = stroke(
+  'M4 6a2 2 0 012-2h8a2 2 0 012 2v11a3 3 0 003 3H8a4 4 0 01-4-4V6zm0 0h12M8 8h4m-4 4h6m-6 4h6m5-8h1m-1 3h1',
+);
 
 export function GridIcon({size = 22, color = '#000', strokeWidth = 1.5}: IconProps) {
   return (

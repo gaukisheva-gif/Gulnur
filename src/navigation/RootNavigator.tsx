@@ -16,6 +16,8 @@ import ContractDetailScreen from '../screens/ContractDetailScreen';
 import CameraScreen from '../screens/CameraScreen';
 import AIRecognizedScreen from '../screens/AIRecognizedScreen';
 import FilePreviewScreen from '../screens/FilePreviewScreen';
+import NewsScreen from '../screens/NewsScreen';
+import NewsDetailScreen from '../screens/NewsDetailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -37,6 +39,8 @@ export default function RootNavigator() {
       <Stack.Screen name="Camera" component={CameraScreen} options={{presentation: 'fullScreenModal'}} />
       <Stack.Screen name="AIRecognized" component={AIRecognizedScreen} />
       <Stack.Screen name="FilePreview" component={FilePreviewScreen} />
+      <Stack.Screen name="News" component={NewsScreen} />
+      <Stack.Screen name="NewsDetail" component={NewsDetailScreen} />
     </Stack.Navigator>
   );
 }

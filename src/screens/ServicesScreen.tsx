@@ -1,7 +1,7 @@
 import React from 'react';
 import {ScrollView, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import {useTheme} from '../theme/ThemeContext';
-import {BuildingIcon, CalculatorIcon, ChevronRightIcon, CurrencyIcon, SearchIcon} from '../components/Icon';
+import {BuildingIcon, CalculatorIcon, ChevronRightIcon, CurrencyIcon, NewspaperIcon, SearchIcon} from '../components/Icon';
 import {MainTabScreenProps} from '../navigation/types';
 
 type ServiceRow = {icon: React.ReactNode; title: string; sub: string; onPress?: () => void; soon?: boolean};
@@ -24,6 +24,12 @@ export default function ServicesScreen({navigation}: MainTabScreenProps<'Service
           title: 'Автоподбор ТН ВЭД',
           sub: 'Подбор кода по наименованию товара',
           onPress: () => navigation.navigate('Tnved'),
+        },
+        {
+          icon: <NewspaperIcon size={20} color={colors.brand600} />,
+          title: 'Новости',
+          sub: 'Таможня, ВЭД и ЕАЭС из проверенных источников',
+          onPress: () => navigation.navigate('News'),
         },
       ],
     },
